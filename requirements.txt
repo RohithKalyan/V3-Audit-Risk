@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+pydantic
+requests
+pandas
+numpy
+catboost
+shap
+sentence-transformers
+scikit-learn
+umap-learn
