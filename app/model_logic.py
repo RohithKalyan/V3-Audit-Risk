@@ -3,15 +3,21 @@
 import pandas as pd
 import numpy as np
 import os
-from catboost import CatBoostClassifier
-import shap
-from sentence_transformers import SentenceTransformer
-from umap import UMAP
-from sklearn.cluster import KMeans
 import warnings
 warnings.filterwarnings("ignore")
 
+# ⛔️ DO NOT import heavy packages here ⛔️
+# Move CatBoost, SHAP, BERT, UMAP, and KMeans into the function body
+
 def run_full_pipeline(file_path: str) -> pd.DataFrame:
+    # ✅ Lazy load heavy packages here
+    import shap
+    from catboost import CatBoostClassifier
+    from sentence_transformers import SentenceTransformer
+    from umap import UMAP
+    from sklearn.cluster import KMeans
+    import requests
+    from io import BytesIO
 
 #===PART B: Load Model + Data + Initial Cleanup ====
 
