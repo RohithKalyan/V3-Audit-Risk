@@ -1,38 +1,37 @@
-# === app/main.py ===
-from fastapi import FastAPI, HTTPException
+import logging
+import traceback
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
-import requests
-import pandas as pd
-import os
-from urllib.parse import urlparse, unquote
-from app.model_logic import run_full_pipeline
+from app.model_logic import run_model_logic  # This assumes model_logic.py is in root and accessible via `app.`
+
+# Setup logging
+logging.basicConfig(level=logging.DEBUG)
 
 app = FastAPI()
 
-class FileInput(BaseModel):
+class FileURLRequest(BaseModel):
     file_url: str
 
 @app.post("/predict")
-async def predict(input_data: FileInput):
+async def predict(request: FileURLRequest):
     try:
-        file_url = input_data.file_url
+        file_url = request.file_url
+        logging.debug(f"🔍 Received file URL: {file_url}")
 
-        # === STEP 1: Extract the filename from the URL ===
-        parsed_url = urlparse(file_url)
-        file_name = os.path.basename(parsed_url.path)
-        file_name = unquote(file_name)
-        file_path = os.path.join("test_files", file_name)
+        # Run prediction logic
+        result_df = run_model_logic(file_url)
 
-        # === STEP 2: Download the file from URL ===
-        with requests.get(file_url, stream=True) as r:
-            r.raise_for_status()
-            with open(file_path, 'wb') as f:
-                for chunk in r.iter_content(chunk_size=8192):
-                    f.write(chunk)
+        # For now, limit to top 10 rows only
+        preview = result_df.head(10).to_dict(orient="records")
 
-        # === STEP 3: Run the full pipeline ===
-        df_result = run_full_pipeline(file_path)
-        return df_result.head(10).to_dict(orient="records")
+        print("✅ FastAPI /predict endpoint hit")
+        return JSONResponse(content=preview)
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logging.error("🔥 Exception during prediction:")
+        traceback.print_exc()
+        return JSONResponse(
+            status_code=500,
+            content={"detail": f"Internal server error: {str(e)}"},
+        )
