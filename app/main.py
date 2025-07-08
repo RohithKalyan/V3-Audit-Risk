@@ -3,7 +3,7 @@ import traceback
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
-from app.model_logic import run_model_logic  # This assumes model_logic.py is in root and accessible via `app.`
+from app.model_logic import run_model_logic  # model_logic.py should be inside the 'app' folder
 
 # Setup logging
 logging.basicConfig(level=logging.DEBUG)
@@ -26,6 +26,8 @@ async def predict(request: FileURLRequest):
         preview = result_df.head(10).to_dict(orient="records")
 
         print("✅ FastAPI /predict endpoint hit")
+        print("✅✅ FastAPI app is alive and has bound to port!")  # This is the Render port binding check
+
         return JSONResponse(content=preview)
 
     except Exception as e:
@@ -35,3 +37,8 @@ async def predict(request: FileURLRequest):
             status_code=500,
             content={"detail": f"Internal server error: {str(e)}"},
         )
+
+@app.get("/health")
+def health_check():
+    print("✅ /health endpoint was hit — service is live.")
+    return {"status": "OK"}
