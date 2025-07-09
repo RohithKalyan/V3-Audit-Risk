@@ -19,10 +19,24 @@ def run_full_pipeline(file_path: str) -> pd.DataFrame:
     import requests
     from io import BytesIO
 
-#===PART B: Load Model + Data + Initial Cleanup ====
+    # === PART B: Load Model + Data + Initial Cleanup ===
 
-    model = CatBoostClassifier()
-    model.load_model("models/catboost_v2_model.cbm")
+    try:
+        print("📦 Loading CatBoost model...")
+        model = CatBoostClassifier()
+        model.load_model("models/catboost_v2_model.cbm")
+        print("✅ CatBoost model loaded")
+    except Exception as e:
+        print("❌ Failed to load CatBoost model:", str(e))
+        raise
+
+    try:
+        print("📦 Downloading SentenceTransformer...")
+        model_bert = SentenceTransformer("all-MiniLM-L6-v2")
+        print("✅ SentenceTransformer loaded")
+    except Exception as e:
+        print("❌ Failed to load BERT model:", str(e))
+        raise
 
     test_df = pd.read_csv(file_path, encoding='ISO-8859-1')
     test_df.columns = test_df.columns.str.strip()
@@ -39,8 +53,7 @@ def run_full_pipeline(file_path: str) -> pd.DataFrame:
     test_df[text_fields] = test_df[text_fields].fillna("")
     test_df["Combined_Text"] = test_df["Line Desc"] + " | " + test_df["Source Desc"] + " | " + test_df["Batch Name"]
 
-#=== PART C: BERT Embeddings + UMAP + Clustering ===
-    model_bert = SentenceTransformer("all-MiniLM-L6-v2")
+    # === PART C: BERT Embeddings + UMAP + Clustering ===
     embeddings = model_bert.encode(test_df["Combined_Text"].tolist(), show_progress_bar=False)
     embedding_df = pd.DataFrame(embeddings, columns=[f"text_emb_{i}" for i in range(embeddings.shape[1])])
     test_df = pd.concat([test_df.reset_index(drop=True), embedding_df], axis=1)
@@ -56,6 +69,9 @@ def run_full_pipeline(file_path: str) -> pd.DataFrame:
         .reset_index(name="Narration_Cluster_Label")
     )
     test_df = test_df.merge(cluster_summary, on="Narration_Cluster", how="left")
+
+
+
 
 # === PART D: Date Features + Feature Preparation ===
     date_cols = ["Accounting Date", "Invoice Date", "Posted Date"]
