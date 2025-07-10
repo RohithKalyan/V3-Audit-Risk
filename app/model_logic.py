@@ -104,6 +104,7 @@ def run_full_pipeline(file_path: str) -> pd.DataFrame:
     test_df["Final_Score"] = test_df["Model_Score"].round(3)
     logging.debug("After model prediction")
 
+    logging.debug(">>> Starting SHAP/explainability section")
     explainer = shap.TreeExplainer(model)
     shap_values = explainer.shap_values(X_final)
 
@@ -173,6 +174,7 @@ def run_full_pipeline(file_path: str) -> pd.DataFrame:
     test_df["Top_Risky_Feature_Groups"] = top_risky_texts
     test_df["Top_Safe_Feature_Groups"] = top_safe_texts
     test_df["Explanation_Summary"] = final_summaries
+    logging.debug(">>> Finished SHAP/explainability section")
 
 #=== PART F: Control Point Logic (CP_01 to CP_32) + Final Return
 
