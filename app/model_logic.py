@@ -4,12 +4,14 @@ import pandas as pd
 import numpy as np
 import os
 import warnings
+import logging
 warnings.filterwarnings("ignore")
 
 # ⛔️ DO NOT import heavy packages here ⛔️
 # Move CatBoost, SHAP, BERT, UMAP, and KMeans into the function body
 
 def run_full_pipeline(file_path: str) -> pd.DataFrame:
+    logging.debug("Starting run_full_pipeline")
     # ✅ Lazy load heavy packages here
     import shap
     from catboost import CatBoostClassifier
@@ -96,9 +98,11 @@ def run_full_pipeline(file_path: str) -> pd.DataFrame:
     X_final = test_df[feature_cols].copy()
 
 #=== PART E: CatBoost Predictions + SHAP + Risk Summaries
+    logging.debug("Before model prediction")
     # === Model Predictions ===
     test_df["Model_Score"] = model.predict_proba(X_final)[:, 1]
     test_df["Final_Score"] = test_df["Model_Score"].round(3)
+    logging.debug("After model prediction")
 
     explainer = shap.TreeExplainer(model)
     shap_values = explainer.shap_values(X_final)
@@ -314,7 +318,7 @@ def run_full_pipeline(file_path: str) -> pd.DataFrame:
 
     # Drop 384 BERT columns from output
     test_df = test_df.drop(columns=[col for col in test_df.columns if col.startswith("text_emb_")])
-
+    logging.debug("run_full_pipeline complete")
     return test_df
 
 

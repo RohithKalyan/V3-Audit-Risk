@@ -10,6 +10,9 @@ import requests
 import pandas as pd
 
 # Setup logging
+import os
+os.environ["NUMBA_LOG_LEVEL"] = "WARNING"
+import logging
 logging.basicConfig(level=logging.DEBUG)
 
 app = FastAPI()
@@ -28,6 +31,7 @@ class FileURLRequest(BaseModel):
 
 @app.post("/predict")
 async def predict(request: FileURLRequest):
+    logging.debug("Received /predict request")
     try:
         file_url = request.file_url
         logging.debug(f"🔍 Received file URL: {file_url}")
@@ -46,8 +50,10 @@ async def predict(request: FileURLRequest):
         # === Lazy import of model logic ===
         from app.model_logic import run_full_pipeline
 
+        logging.debug("Calling run_full_pipeline")
         # === Run Pipeline ===
         result_df = run_full_pipeline(local_path)
+        logging.debug("run_full_pipeline returned")
 
         # === Fix datetime serialization issue ===
         for col in result_df.select_dtypes(include=["datetime64[ns]", "datetime64[ns, UTC]"]).columns:
